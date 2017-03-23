@@ -1,12 +1,32 @@
+#define  _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <fcntl.h>
+#include <assert.h>
+
+#include <unistd.h>
+#include <pthread.h>
+#include <sys/mman.h>
 
 #include "phonebook_opt.h"
 #include "debug.h"
+#include "text_align.h"
 
-entry *findName(char lastname[], entry *pHead)
+#define ALIGN_FILE "align.txt"
+
+#ifndef THREAD_NUM
+#define THREAD_NUM 4
+#endif
+
+char *map;
+entry *entry_pool;
+thread_arg *thread_args[THREAD_NUM];
+off_t file_size;
+int fd;
+
+entry *opt_findName(char lastname[], entry *pHead)
 {
     size_t len = strlen(lastname);
     while (pHead) {
@@ -42,7 +62,7 @@ thread_arg *createThread_arg(char *data_begin, char *data_end,
 /**
  * Generate a local linked list in thread.
  */
-void append(void *arg)
+void threads_append(void *arg)
 {
     struct timespec start, end;
     double cpu_time;
@@ -50,7 +70,6 @@ void append(void *arg)
     clock_gettime(CLOCK_REALTIME, &start);
 
     thread_arg *t_arg = (thread_arg *) arg;
-
     int count = 0;
     entry *j = t_arg->lEntryPool_begin;
     for (char *i = t_arg->data_begin; i < t_arg->data_end;
@@ -68,7 +87,7 @@ void append(void *arg)
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time = diff_in_second(start, end);
 
-    DEBUG_LOG("thread take %lf sec, count %d\n", cpu_time, count);
+    DEBUG_LOG("thread %d take %lf sec, count %d\n", t_arg->threadID, cpu_time, count);
 
     pthread_exit(NULL);
 }
@@ -93,3 +112,93 @@ static double diff_in_second(struct timespec t1, struct timespec t2)
     }
     return (diff.tv_sec + diff.tv_nsec / 1000000000.0);
 }
+
+entry *opt_append(char *fileName)
+{
+    int i = 0;
+
+    /* File preprocessint */
+    text_align(fileName, ALIGN_FILE, MAX_LAST_NAME_SIZE);
+    fd = open(ALIGN_FILE, O_RDONLY | O_NONBLOCK);
+    file_size = fsize(ALIGN_FILE);
+
+    /* Build the entry */
+    entry *pHead, *e;
+    printf("size of entry : %lu bytes\n", sizeof(entry));
+
+    pthread_t threads[THREAD_NUM];
+
+    /* Allocate the resorce at first */
+    map = mmap(NULL, file_size,
+               PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+    assert(map && "mmap error");
+    entry_pool = (entry *)malloc(sizeof(entry) *
+                                 file_size / MAX_LAST_NAME_SIZE);
+    assert(entry_pool && "entry_pool error");
+
+    /* Prepare for multi-threading */
+    //pthread_setconcurrency(THREAD_NUM + 1);
+    for (i = 0; i < THREAD_NUM; i++)
+        // Created by malloc, remenber to free them.
+        thread_args[i] = createThread_arg(map + MAX_LAST_NAME_SIZE * i, map + file_size, i, THREAD_NUM, entry_pool + i);
+
+    /* Deliver the jobs to all threads and wait for completing */
+    for (i = 0; i < THREAD_NUM; i++)
+        pthread_create(&threads[i], NULL, (void *)&threads_append,
+                       (void *)thread_args[i]);
+
+    for (i = 0; i < THREAD_NUM; i++)
+        pthread_join(threads[i], NULL);
+
+    /* Connect the linked list of each thread */
+    pHead = thread_args[0]->lEntry_head->pNext;
+    DEBUG_LOG("Connect %d head string %s %p\n", 0,
+              pHead->lastName, thread_args[0]->data_begin);
+    e = thread_args[0]->lEntry_tail;
+    DEBUG_LOG("Connect %d tail string%s %p\n", 0,
+              e->lastName, thread_args[0]->data_begin);
+    DEBUG_LOG("round %d\n", 0);
+    for (i = 1; i < THREAD_NUM; i++) {
+        e->pNext = thread_args[i]->lEntry_head->pNext;
+        DEBUG_LOG("Connect %d head string %s %p\n", i,
+                  e->pNext->lastName, thread_args[i]->data_begin);
+
+        e = thread_args[i]->lEntry_tail;
+        DEBUG_LOG("Connect %d tail string%s %p\n", i,
+                  e->lastName, thread_args[i]->data_begin);
+        DEBUG_LOG("round %d\n", i);
+    }
+
+    return pHead;
+}
+
+void opt_write(double cpu_time[])
+{
+    FILE *output;
+    output = fopen("opt.txt", "a");
+    fprintf(output, "phonebook_append() phonebook_findName() %lf %lf\n",
+            cpu_time[0], cpu_time[1]);
+    fclose(output);
+}
+
+void opt_free(entry *pHead)
+{
+    entry *e = pHead;
+    /* free the location detail */
+    while (e) {
+        free(e->dtl);
+        e = e->pNext;
+    }
+    free(entry_pool);
+    for (int i = 0; i < THREAD_NUM; i++)
+        free(thread_args[i]);
+    munmap(map, file_size);
+    close(fd);
+}
+
+struct __PHONEBOOK_API__ Phonebook = {
+    .phonebook_findName = opt_findName,
+    .phonebook_append = opt_append,
+    .phonebook_write = opt_write,
+    .phonebook_free = opt_free,
+};
