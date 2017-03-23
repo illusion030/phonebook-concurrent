@@ -26,7 +26,7 @@ thread_arg *thread_args[THREAD_NUM];
 off_t file_size;
 int fd;
 
-entry *opt_findName(char lastname[], entry *pHead)
+entry *opt_findLastName(char lastname[], entry *pHead)
 {
     size_t len = strlen(lastname);
     while (pHead) {
@@ -176,7 +176,7 @@ void opt_write(double cpu_time[])
 {
     FILE *output;
     output = fopen("opt.txt", "a");
-    fprintf(output, "phonebook_append() phonebook_findName() %lf %lf\n",
+    fprintf(output, "pb_append() pb_findLastName() %lf %lf\n",
             cpu_time[0], cpu_time[1]);
     fclose(output);
 }
@@ -196,9 +196,9 @@ void opt_free(entry *pHead)
     close(fd);
 }
 
-struct __PHONEBOOK_API__ Phonebook = {
-    .phonebook_findName = opt_findName,
-    .phonebook_append = opt_append,
-    .phonebook_write = opt_write,
-    .phonebook_free = opt_free,
+struct __PHONEBOOK_API__ pb = {
+    .findLastName = opt_findLastName,
+    .append = opt_append,
+    .write = opt_write,
+    .free = opt_free,
 };

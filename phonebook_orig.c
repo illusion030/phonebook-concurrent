@@ -6,7 +6,7 @@
 #include "phonebook_orig.h"
 
 /* original version */
-entry *orig_findName(char lastname[], entry *pHead)
+entry *orig_findLastName(char lastname[], entry *pHead)
 {
     while (pHead) {
         if (strcasecmp(lastname, pHead->lastName) == 0)
@@ -68,7 +68,7 @@ void orig_write(double cpu_time[])
 {
     FILE *output;
     output = fopen("orig.txt", "a");
-    fprintf(output, "phonebook_append() phonebook_findName() %lf %lf\n", cpu_time[0], cpu_time[1]);
+    fprintf(output, "pb_append() pb_findLastName() %lf %lf\n", cpu_time[0], cpu_time[1]);
     fclose(output);
 }
 
@@ -82,9 +82,9 @@ void orig_free(entry *pHead)
     }
 }
 
-struct __PHONEBOOK_API__ Phonebook = {
-    .phonebook_findName = orig_findName,
-    .phonebook_append = orig_append,
-    .phonebook_write = orig_write,
-    .phonebook_free = orig_free,
+struct __PHONEBOOK_API__ pb = {
+    .findLastName = orig_findLastName,
+    .append = orig_append,
+    .write = orig_write,
+    .free = orig_free,
 };

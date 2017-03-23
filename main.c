@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 
     /* Start timing */
     clock_gettime(CLOCK_REALTIME, &start);
-    pHead = Phonebook.phonebook_append(DICT_FILE);
+    pHead = pb.append(DICT_FILE);
     /* Stop timing */
     clock_gettime(CLOCK_REALTIME, &end);
 
@@ -42,27 +42,27 @@ int main(int argc, char *argv[])
 
     e = pHead;
 
-    assert(Phonebook.phonebook_findName("zyxel", e) &&
-           "Did you implement findName() in " IMPL "?");
-    assert(0 == strcmp(Phonebook.phonebook_findName("zyxel", e)->lastName, "zyxel"));
+    assert(pb.findLastName("zyxel", e) &&
+           "Did you implement findLastName() in " IMPL "?");
+    assert(0 == strcmp(pb.findLastName("zyxel", e)->lastName, "zyxel"));
 
 #if defined(__GNUC__)
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
     /* Compute the execution time */
     clock_gettime(CLOCK_REALTIME, &start);
-    Phonebook.phonebook_findName("zyxel", e);
+    pb.findLastName("zyxel", e);
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time[1] = diff_in_second(start, end);
 
     /* Write the execution time to file. */
-    Phonebook.phonebook_write(cpu_time);
+    pb.write(cpu_time);
 
-    printf("execution time of phonebook_append() : %lf sec\n", cpu_time[0]);
-    printf("execution time of phonebook_findName() : %lf sec\n", cpu_time[1]);
+    printf("execution time of append() : %lf sec\n", cpu_time[0]);
+    printf("execution time of findLastName() : %lf sec\n", cpu_time[1]);
 
     /* Release memory */
-    Phonebook.phonebook_free(pHead);
+    pb.free(pHead);
 
     return 0;
 }

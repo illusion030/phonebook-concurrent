@@ -39,17 +39,17 @@ typedef struct _thread_argument {
 } thread_arg;
 
 extern struct __PHONEBOOK_API__ {
-    entry *(*phonebook_findName)(char lastname[], entry *pHead);
-    entry *(*phonebook_append)(char *fileName);
-    void (*phonebook_write)(double cpu_time[]);
-    void (*phonebook_free)(entry *pHead);
-} Phonebook;
+    entry *(*findLastName)(char lastname[], entry *pHead);
+    entry *(*append)(char *fileName);
+    void (*write)(double cpu_time[]);
+    void (*free)(entry *pHead);
+} pb;
 
 thread_arg *createThread_arg(char *data_begin, char *data_end,
                              int threadID, int numOfThread,
                              entry *entryPool);
 
-entry *opt_findName(char lastname[], entry *pHead);
+entry *opt_findLastName(char lastname[], entry *pHead);
 void threads_append(void *arg);
 void show_entry(entry *pHead);
 static double diff_in_second(struct timespec t1, struct timespec t2);
