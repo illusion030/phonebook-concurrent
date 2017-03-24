@@ -24,7 +24,7 @@ extern struct __PHONEBOOK_API__ {
     entry *(*append)(char *fileName);
     void (*write)(double cpu_time[]);
     void (*free)(entry *pHead);
-} pb;
+} phonebook_orig;
 
 entry *append(char lastName[], entry *e);
 entry *orig_findLastName(char lastname[], entry *pHead);

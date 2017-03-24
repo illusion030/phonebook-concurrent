@@ -13,6 +13,10 @@
 
 #define DICT_FILE "./dictionary/words.txt"
 
+#ifndef PB
+#define PB phonebook_orig
+#endif
+
 static double diff_in_second(struct timespec t1, struct timespec t2)
 {
     struct timespec diff;
@@ -31,10 +35,9 @@ int main(int argc, char *argv[])
     struct timespec start, end;
     double cpu_time[2];
     entry *e, *pHead;
-
     /* Start timing */
     clock_gettime(CLOCK_REALTIME, &start);
-    pHead = pb.append(DICT_FILE);
+    pHead = PB.append(DICT_FILE);
     /* Stop timing */
     clock_gettime(CLOCK_REALTIME, &end);
 
@@ -42,27 +45,27 @@ int main(int argc, char *argv[])
 
     e = pHead;
 
-    assert(pb.findLastName("zyxel", e) &&
+    assert(PB.findLastName("zyxel", e) &&
            "Did you implement findLastName() in " IMPL "?");
-    assert(0 == strcmp(pb.findLastName("zyxel", e)->lastName, "zyxel"));
+    assert(0 == strcmp(PB.findLastName("zyxel", e)->lastName, "zyxel"));
 
 #if defined(__GNUC__)
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
     /* Compute the execution time */
     clock_gettime(CLOCK_REALTIME, &start);
-    pb.findLastName("zyxel", e);
+    PB.findLastName("zyxel", e);
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time[1] = diff_in_second(start, end);
 
     /* Write the execution time to file. */
-    pb.write(cpu_time);
+    PB.write(cpu_time);
 
     printf("execution time of append() : %lf sec\n", cpu_time[0]);
     printf("execution time of findLastName() : %lf sec\n", cpu_time[1]);
 
     /* Release memory */
-    pb.free(pHead);
+    PB.free(pHead);
 
     return 0;
 }

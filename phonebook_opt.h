@@ -43,7 +43,7 @@ extern struct __PHONEBOOK_API__ {
     entry *(*append)(char *fileName);
     void (*write)(double cpu_time[]);
     void (*free)(entry *pHead);
-} pb;
+} phonebook_opt;
 
 thread_arg *createThread_arg(char *data_begin, char *data_end,
                              int threadID, int numOfThread,

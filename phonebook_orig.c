@@ -82,7 +82,7 @@ void orig_free(entry *pHead)
     }
 }
 
-struct __PHONEBOOK_API__ pb = {
+struct __PHONEBOOK_API__ phonebook_orig = {
     .findLastName = orig_findLastName,
     .append = orig_append,
     .write = orig_write,

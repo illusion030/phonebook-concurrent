@@ -196,7 +196,7 @@ void opt_free(entry *pHead)
     close(fd);
 }
 
-struct __PHONEBOOK_API__ pb = {
+struct __PHONEBOOK_API__ phonebook_opt = {
     .findLastName = opt_findLastName,
     .append = opt_append,
     .write = opt_write,

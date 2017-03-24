@@ -31,12 +31,12 @@ tools/text_align: text_align.c tools/tool-text_align.c
 
 phonebook_orig: $(SRCS_common) phonebook_orig.c phonebook_orig.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_orig) \
-		-DIMPL="\"$@.h\"" -o $@ \
+		-DIMPL="\"$@.h\"" -DPB="phonebook_orig" -o $@ \
 		$(SRCS_common) $@.c
 
 phonebook_opt: $(SRCS_common) phonebook_opt.c phonebook_opt.h text_align.c
 	$(CC) $(CFLAGS_common) $(CFLAGS_opt) \
-		-DIMPL="\"$@.h\"" -o $@ \
+		-DIMPL="\"$@.h\"" -DPB="phonebook_opt" -o $@ \
 		$(SRCS_common) $@.c text_align.c
 
 run: $(EXEC)
