@@ -42,10 +42,33 @@ int main(void)
         opt_sum_a += opt_a;
         opt_sum_f += opt_f;
     }
-    fprintf(output, "append() %lf %lf\n", orig_sum_a / 100.0,
-            opt_sum_a / 100.0);
-    fprintf(output, "findLastName() %lf %lf", orig_sum_f / 100.0,
-            opt_sum_f / 100.0);
+    fclose(fp);
+
+    fp = fopen("pool.txt", "r");
+    if (!fp) {
+        fp = fopen("orig.txt", "r");
+        if (!fp) {
+            printf("ERROR opening input file opt.txt\n");
+            exit(0);
+        }
+    }
+    double pool_sum_a = 0.0, pool_sum_f = 0.0, pool_a, pool_f;
+    for (int i = 0; i < 100; i++) {
+        if (feof(fp)) {
+            printf("ERROR: You need 100 datum instead of %d\n", i);
+            printf("run 'make run' longer to get enough information\n\n");
+            exit(0);
+        }
+        fscanf(fp, "%s %s %lf %lf\n", append, findLastName,&pool_a, &pool_f);
+        pool_sum_a += pool_a;
+        pool_sum_f += pool_f;
+    }
+
+    fprintf(output, "append() %lf %lf %lf\n", orig_sum_a / 100.0,
+            opt_sum_a / 100.0, pool_sum_a / 100.0);
+    fprintf(output, "findLastName() %lf %lf %lf",
+            orig_sum_f / 100.0, opt_sum_f / 100.0,
+            pool_sum_f / 100.0);
     fclose(output);
     fclose(fp);
     return 0;

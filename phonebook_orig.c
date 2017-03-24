@@ -32,7 +32,6 @@ entry *orig_append (char *fileName)
     FILE *fp;
     int i = 0;
     char line[MAX_LAST_NAME_SIZE];
-
     /* File preprocessing */
     /* check file opening */
     fp = fopen(fileName, "r");

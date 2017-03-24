@@ -10,23 +10,31 @@
 #include <pthread.h>
 #include <sys/mman.h>
 
-#include "phonebook_opt.h"
+#include "phonebook_pool.h"
 #include "debug.h"
 #include "text_align.h"
+#include "threadpool.h"
 
 #define ALIGN_FILE "align.txt"
+#define QUEUE_SIZE 15000
+
+#ifndef TASK_NUM
+#define TASK_NUM 1024
+#endif
 
 #ifndef THREAD_NUM
 #define THREAD_NUM 4
 #endif
 
+int done = 0;
 char *map;
 entry *entry_pool;
-thread_arg *thread_args[THREAD_NUM];
+thread_arg *thread_args[65535];
 off_t file_size;
 int fd;
+pthread_mutex_t lock;
 
-entry *opt_findLastName(char lastname[], entry *pHead)
+entry *pool_findLastName(char lastname[], entry *pHead)
 {
     size_t len = strlen(lastname);
     while (pHead) {
@@ -38,7 +46,7 @@ entry *opt_findLastName(char lastname[], entry *pHead)
                 pHead->dtl = (pdetail) malloc(sizeof(detail));
             return pHead;
         }
-//        DEBUG_LOG("find string = %s\n", pHead->lastName);
+        DEBUG_LOG("find string = %s\n", pHead->lastName);
         pHead = pHead->pNext;
     }
     return NULL;
@@ -81,15 +89,18 @@ void threads_append(void *arg)
         t_arg->lEntry_tail->lastName = i;
         t_arg->lEntry_tail->pNext = NULL;
         t_arg->lEntry_tail->dtl = NULL;
-        // DEBUG_LOG("thread %d t_argend string = %s\n",
-        //         t_arg->threadID, t_arg->lEntry_tail->lastName);
+        DEBUG_LOG("thread %d t_argend string = %s\n",
+                  t_arg->threadID, t_arg->lEntry_tail->lastName);
     }
+    pthread_mutex_lock(&lock);
+    done++;
+    pthread_mutex_unlock(&lock);
+
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time = diff_in_second(start, end);
 
     DEBUG_LOG("thread %d take %lf sec, count %d\n", t_arg->threadID, cpu_time, count);
 
-    pthread_exit(NULL);
 }
 
 void show_entry(entry *pHead)
@@ -113,7 +124,7 @@ static double diff_in_second(struct timespec t1, struct timespec t2)
     return (diff.tv_sec + diff.tv_nsec / 1000000000.0);
 }
 
-entry *opt_append(char *fileName)
+entry *pool_append(char *fileName)
 {
     int i = 0;
     /* File preprocessint */
@@ -125,7 +136,7 @@ entry *opt_append(char *fileName)
     entry *pHead, *e;
     printf("size of entry : %lu bytes\n", sizeof(entry));
 
-    pthread_t threads[THREAD_NUM];
+    threadpool_t *pool;
 
     /* Allocate the resorce at first */
     map = mmap(NULL, file_size,
@@ -136,20 +147,22 @@ entry *opt_append(char *fileName)
     assert(entry_pool && "entry_pool error");
 
     /* Prepare for multi-threading */
-    //pthread_setconcurrency(THREAD_NUM + 1);
-    for (i = 0; i < THREAD_NUM; i++)
+    for (i = 0; i < TASK_NUM; i++)
         // Created by malloc, remenber to free them.
-        thread_args[i] = createThread_arg(map + MAX_LAST_NAME_SIZE * i, map + file_size, i, THREAD_NUM, entry_pool + i);
+        thread_args[i] = createThread_arg(map + MAX_LAST_NAME_SIZE * i, map + file_size, i, TASK_NUM, entry_pool + i);
 
-    /* Deliver the jobs to all threads and wait for completing */
-    for (i = 0; i < THREAD_NUM; i++)
-        pthread_create(&threads[i], NULL, (void *)&threads_append,
+    pthread_mutex_init(&lock, NULL);
+
+    assert((pool = threadpool_create(THREAD_NUM, QUEUE_SIZE)) != NULL);
+
+    for (i = 0; i < TASK_NUM; i++)
+        threadpool_add(pool, (void *)&threads_append,
                        (void *)thread_args[i]);
 
-    for (i = 0; i < THREAD_NUM; i++)
-        pthread_join(threads[i], NULL);
+    while(TASK_NUM != done) ;
 
-    /* Connect the linked list of each thread */
+    assert(threadpool_destroy(pool, 0) == 0);
+
     pHead = thread_args[0]->lEntry_head->pNext;
     DEBUG_LOG("Connect %d head string %s %p\n", 0,
               pHead->lastName, thread_args[0]->data_begin);
@@ -157,7 +170,7 @@ entry *opt_append(char *fileName)
     DEBUG_LOG("Connect %d tail string%s %p\n", 0,
               e->lastName, thread_args[0]->data_begin);
     DEBUG_LOG("round %d\n", 0);
-    for (i = 1; i < THREAD_NUM; i++) {
+    for (i = 1; i < TASK_NUM; i++) {
         e->pNext = thread_args[i]->lEntry_head->pNext;
         DEBUG_LOG("Connect %d head string %s %p\n", i,
                   e->pNext->lastName, thread_args[i]->data_begin);
@@ -171,16 +184,16 @@ entry *opt_append(char *fileName)
     return pHead;
 }
 
-void opt_write(double cpu_time[])
+void pool_write(double cpu_time[])
 {
     FILE *output;
-    output = fopen("opt.txt", "a");
+    output = fopen("pool.txt", "a");
     fprintf(output, "pb_append() pb_findLastName() %lf %lf\n",
             cpu_time[0], cpu_time[1]);
     fclose(output);
 }
 
-void opt_free(entry *pHead)
+void pool_free(entry *pHead)
 {
     entry *e = pHead;
     /* free the location detail */
@@ -189,15 +202,15 @@ void opt_free(entry *pHead)
         e = e->pNext;
     }
     free(entry_pool);
-    for (int i = 0; i < THREAD_NUM; i++)
+    for (int i = 0; i < TASK_NUM; i++)
         free(thread_args[i]);
     munmap(map, file_size);
     close(fd);
 }
 
-struct __PHONEBOOK_API__ phonebook_opt = {
-    .findLastName = opt_findLastName,
-    .append = opt_append,
-    .write = opt_write,
-    .free = opt_free,
+struct __PHONEBOOK_API__ phonebook_pool = {
+    .findLastName = pool_findLastName,
+    .append = pool_append,
+    .write = pool_write,
+    .free = pool_free,
 };
