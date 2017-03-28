@@ -3,7 +3,11 @@
 
 #define MAX_LAST_NAME_SIZE 16
 
+#define PB_IMPL phonebook_orig
+
 /* original version */
+
+typedef struct __PHONEBOOK_API__ phonebook;
 
 typedef struct __PHONE_BOOK_ENTRY {
     char lastName[MAX_LAST_NAME_SIZE];
@@ -19,7 +23,7 @@ typedef struct __PHONE_BOOK_ENTRY {
     struct __PHONE_BOOK_ENTRY *pNext;
 } entry;
 
-extern struct __PHONEBOOK_API__ {
+extern struct phonebook {
     entry *(*findLastName)(char lastname[], entry *pHead);
     entry *(*append)(char *fileName);
     void (*write)(double cpu_time[]);

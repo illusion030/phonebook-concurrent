@@ -38,17 +38,17 @@ tools/text_align: text_align.c tools/tool-text_align.c
 
 phonebook_orig: $(SRCS_common) phonebook_orig.c phonebook_orig.h
 	$(CC) $(CFLAGS_common) $(CFLAGS_orig) \
-		-DIMPL="\"$@.h\"" -DPHONEBOOK="phonebook_orig" -o $@ \
+		-DIMPL="\"$@.h\"" -o $@ \
 		$(SRCS_common) $@.c
 
 phonebook_opt: $(SRCS_common) phonebook_opt.c phonebook_opt.h text_align.c
 	$(CC) $(CFLAGS_common) $(CFLAGS_opt) \
-		-DIMPL="\"$@.h\"" -DPHONEBOOK="phonebook_opt" -o $@ \
+		-DIMPL="\"$@.h\"" -o $@ \
 		$(SRCS_common) $@.c text_align.c
 
 phonebook_pool: $(SRCS_common) phonebook_pool.c phonebook_pool.h text_align.c threadpool.c
 	$(CC) $(CFLAGS_common) $(CFLAGS_pool) \
-		-DIMPL="\"$@.h\"" -DPHONEBOOK="phonebook_pool" -o $@ \
+		-DIMPL="\"$@.h\"" -o $@ \
 		$(SRCS_common) $@.c text_align.c threadpool.c
 
 run: $(EXEC)

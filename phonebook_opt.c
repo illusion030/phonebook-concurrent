@@ -38,7 +38,7 @@ entry *opt_findLastName(char lastname[], entry *pHead)
                 pHead->dtl = (pdetail) malloc(sizeof(detail));
             return pHead;
         }
-//        DEBUG_LOG("find string = %s\n", pHead->lastName);
+        DEBUG_LOG("find string = %s\n", pHead->lastName);
         pHead = pHead->pNext;
     }
     return NULL;
@@ -81,8 +81,8 @@ void threads_append(void *arg)
         t_arg->lEntry_tail->lastName = i;
         t_arg->lEntry_tail->pNext = NULL;
         t_arg->lEntry_tail->dtl = NULL;
-        // DEBUG_LOG("thread %d t_argend string = %s\n",
-        //         t_arg->threadID, t_arg->lEntry_tail->lastName);
+        DEBUG_LOG("thread %d t_argend string = %s\n",
+                  t_arg->threadID, t_arg->lEntry_tail->lastName);
     }
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time = diff_in_second(start, end);
@@ -195,7 +195,7 @@ void opt_free(entry *pHead)
     close(fd);
 }
 
-struct __PHONEBOOK_API__ phonebook_opt = {
+struct phonebook phonebook_opt = {
     .findLastName = opt_findLastName,
     .append = opt_append,
     .write = opt_write,

@@ -208,7 +208,7 @@ void pool_free(entry *pHead)
     close(fd);
 }
 
-struct __PHONEBOOK_API__ phonebook_pool = {
+struct phonebook phonebook_pool = {
     .findLastName = pool_findLastName,
     .append = pool_append,
     .write = pool_write,

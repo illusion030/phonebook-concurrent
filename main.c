@@ -13,8 +13,8 @@
 
 #define DICT_FILE "./dictionary/words.txt"
 
-#ifndef PB
-#define PB phonebook_orig
+#ifndef PB_IMPL
+#define PB_IMPL phonebook_orig
 #endif
 
 static double diff_in_second(struct timespec t1, struct timespec t2)
@@ -32,12 +32,13 @@ static double diff_in_second(struct timespec t1, struct timespec t2)
 
 int main(int argc, char *argv[])
 {
+    struct phonebook pb = PB_IMPL;
     struct timespec start, end;
     double cpu_time[2];
     entry *e, *pHead;
     /* Start timing */
     clock_gettime(CLOCK_REALTIME, &start);
-    pHead = PHONEBOOK.append(DICT_FILE);
+    pHead = pb.append(DICT_FILE);
     /* Stop timing */
     clock_gettime(CLOCK_REALTIME, &end);
 
@@ -45,27 +46,27 @@ int main(int argc, char *argv[])
 
     e = pHead;
 
-    assert(PHONEBOOK.findLastName("zyxel", e) &&
+    assert(pb.findLastName("zyxel", e) &&
            "Did you implement findLastName() in " IMPL "?");
-    assert(0 == strcmp(PHONEBOOK.findLastName("zyxel", e)->lastName, "zyxel"));
+    assert(0 == strcmp(pb.findLastName("zyxel", e)->lastName, "zyxel"));
 
 #if defined(__GNUC__)
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
     /* Compute the execution time */
     clock_gettime(CLOCK_REALTIME, &start);
-    PHONEBOOK.findLastName("zyxel", e);
+    pb.findLastName("zyxel", e);
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time[1] = diff_in_second(start, end);
 
     /* Write the execution time to file. */
-    PHONEBOOK.write(cpu_time);
+    pb.write(cpu_time);
 
     printf("execution time of append() : %lf sec\n", cpu_time[0]);
     printf("execution time of findLastName() : %lf sec\n", cpu_time[1]);
 
     /* Release memory */
-    PHONEBOOK.free(pHead);
+    pb.free(pHead);
 
     return 0;
 }

@@ -8,6 +8,12 @@
 
 #define OPT 1
 
+#define PB_IMPL phonebook_pool
+
+/* thread pool version */
+
+typedef struct __PHONEBOOK_API__ phonebook;
+
 typedef struct _detail {
     char firstName[16];
     char email[16];
@@ -38,7 +44,7 @@ typedef struct _thread_argument {
     entry *lEntry_tail;	/* local entry linked list */
 } thread_arg;
 
-extern struct __PHONEBOOK_API__ {
+extern struct phonebook {
     entry *(*findLastName)(char lastname[], entry *pHead);
     entry *(*append)(char *fileName);
     void (*write)(double cpu_time[]);
